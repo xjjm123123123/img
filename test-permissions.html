@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飞书权限测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>飞书 API 权限测试</h1>
+    <div id="results"></div>
+
+    <div class="section">
+        <h3>1. 测试获取访问令牌</h3>
+        <button onclick="testAccessToken()">测试获取令牌</button>
+    </div>
+
+    <div class="section">
+        <h3>2. 测试获取表格字段</h3>
+        <button onclick="testGetFields()">测试获取字段</button>
+    </div>
+
+    <div class="section">
+        <h3>3. 测试查询记录</h3>
+        <button onclick="testQueryRecords()">测试查询记录（带filter）</button>
+        <button onclick="testQueryAllRecords()">测试查询所有记录</button>
+    </div>
+
+    <div class="section">
+        <h3>4. 测试创建记录</h3>
+        <button onclick="testCreateRecord()">测试创建记录</button>
+    </div>
+
+    <script>
+        const config = {
+            app_id: 'cli_a9c4ed7818f9dbd5',
+            app_secret: 'eXdWjCrImmRXGCrNfHCSmdFYUACJyPEv',
+            bitable_app_token: 'YOEjbfidsa4z6tsroGIcnQtLnKd',
+            bitable_table_id: 'tblIm3649qq3atOU'
+        };
+
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(message, type) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        async function testAccessToken() {
+            addResult('正在测试获取访问令牌...', 'info');
+
+            try {
+                const response = await fetch('/api/feishu/access_token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        app_id: config.app_id,
+                        app_secret: config.app_secret
+                    })
+                });
+
+                const responseText = await response.text();
+                console.log('访问令牌响应:', responseText);
+
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    addResult(`✓ 成功获取访问令牌！`, 'success');
+                    addResult(`令牌: ${data.access_token.substring(0, 20)}...`, 'info');
+                } else {
+                    addResult(`✗ 获取访问令牌失败: ${response.status} - ${responseText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testGetFields() {
+            addResult('正在测试获取表格字段...', 'info');
+
+            try {
+                const response = await fetch('/api/feishu/fields', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        app_id: config.app_id,
+                        app_secret: config.app_secret,
+                        bitable_app_token: config.bitable_app_token,
+                        bitable_table_id: config.bitable_table_id
+                    })
+                });
+
+                const responseText = await response.text();
+                console.log('获取字段响应:', responseText);
+
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    addResult(`✓ 成功获取表格字段！`, 'success');
+                    const fields = data.data?.items || [];
+                    addResult(`找到 ${fields.length} 个字段`, 'info');
+                } else {
+                    addResult(`✗ 获取字段失败: ${response.status} - ${responseText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testQueryRecords() {
+            addResult('正在测试查询记录...', 'info');
+
+            try {
+                const response = await fetch('/api/feishu/records/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        app_id: config.app_id,
+                        app_secret: config.app_secret,
+                        bitable_app_token: config.bitable_app_token,
+                        bitable_table_id: config.bitable_table_id,
+                        name_field_name: 'name',
+                        activity_name: 'test_activity'
+                    })
+                });
+
+                const responseText = await response.text();
+                console.log('查询记录响应:', responseText);
+
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    addResult(`✓ 成功查询记录！`, 'success');
+                    addResult(`记录ID: ${data.record_id || '未找到'}`, 'info');
+                } else {
+                    addResult(`✗ 查询记录失败: ${response.status} - ${responseText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testQueryAllRecords() {
+            addResult('正在测试查询所有记录...', 'info');
+
+            try {
+                const response = await fetch('/api/feishu/records/all', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        app_id: config.app_id,
+                        app_secret: config.app_secret,
+                        bitable_app_token: config.bitable_app_token,
+                        bitable_table_id: config.bitable_table_id
+                    })
+                });
+
+                const responseText = await response.text();
+                console.log('查询所有记录响应:', responseText);
+
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    addResult(`✓ 成功查询所有记录！`, 'success');
+                    const items = data.data?.items || [];
+                    addResult(`找到 ${items.length} 条记录`, 'info');
+                    if (items.length > 0) {
+                        addResult(`第一条记录的字段: ${JSON.stringify(Object.keys(items[0].fields))}`, 'info');
+                    }
+                } else {
+                    addResult(`✗ 查询所有记录失败: ${response.status} - ${responseText}`, 'error');
+                }
+            } catch (error) {
+                addResult(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCreateRecord() {
+            addResult('正在测试创建记录...', 'info');
+
+            try {
+                const response = await fetch('/api/feishu/records', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        app_id: config.app_id,
+                        app_secret: config.app_secret,
+                        bitable_app_token: config.bitable_app_token,
+                        bitable_table_id: config.bitable_table_id,
+                        fields: {
+                            name: 'test_' + Date.now(),
+                            imgurl1: 'https://example.com/test1.jpg',
+                            imgurl2: 'https://example.com/test2.jpg',
+                            imgurl3: 'https://example.com/test3.jpg'
+                        }
+                    })
+                });
+
+                const responseText = await response.text();
+                console.log('创建记录响应:', responseText);
+
+                if (response.ok) {
+                    const data = JSON.parse(responseText);
+                    addResult(`✓ 成功创建记录！`, 'success');
+                    addResult(`记录ID: ${data.data?.record?.record_id}`, 'info');
+                } else {
+                    addResult(`✗ 创建记录失败: ${response.status} - ${responseText}`, 'error');
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        addResult(`错误代码: ${errorData.code}, 错误信息: ${errorData.msg}`, 'error');
+                    } catch (e) {
+                        // 无法解析错误
+                    }
+                }
+            } catch (error) {
+                addResult(`✗ 测试失败: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
