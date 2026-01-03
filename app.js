@@ -30,21 +30,13 @@ class ImageUploader {
     }
 
     async loadConfig() {
-        const savedConfig = localStorage.getItem('uploadConfig');
-        if (savedConfig) {
-            try {
-                const config = JSON.parse(savedConfig);
-                if (config.githubToken) document.getElementById('githubToken').value = config.githubToken;
-                if (config.githubOwner) document.getElementById('githubOwner').value = config.githubOwner;
-                if (config.githubRepo) document.getElementById('githubRepo').value = config.githubRepo;
-                if (config.githubBranch) document.getElementById('githubBranch').value = config.githubBranch;
-                if (config.feishuAppId) document.getElementById('feishuAppId').value = config.feishuAppId;
-                if (config.feishuAppSecret) document.getElementById('feishuAppSecret').value = config.feishuAppSecret;
-                if (config.feishuBitableAppToken) document.getElementById('feishuBitableAppToken').value = config.feishuBitableAppToken;
-                if (config.feishuBitableTableId) document.getElementById('feishuBitableTableId').value = config.feishuBitableTableId;
-            } catch (error) {
-                console.error('加载保存的配置失败:', error);
-            }
+        try {
+            const response = await fetch('/api/config');
+            const configData = await response.json();
+            this.config = configData;
+        } catch (error) {
+            console.error('加载配置失败:', error);
+            this.config = null;
         }
 
         const savedActivityName = localStorage.getItem('activityName');
@@ -54,20 +46,9 @@ class ImageUploader {
     }
 
     saveConfig() {
-        const config = {
-            githubToken: document.getElementById('githubToken').value,
-            githubOwner: document.getElementById('githubOwner').value,
-            githubRepo: document.getElementById('githubRepo').value,
-            githubBranch: document.getElementById('githubBranch').value,
-            feishuAppId: document.getElementById('feishuAppId').value,
-            feishuAppSecret: document.getElementById('feishuAppSecret').value,
-            feishuBitableAppToken: document.getElementById('feishuBitableAppToken').value,
-            feishuBitableTableId: document.getElementById('feishuBitableTableId').value,
-            activityName: document.getElementById('activityName').value
-        };
-        localStorage.setItem('uploadConfig', JSON.stringify(config));
-        localStorage.setItem('activityName', config.activityName);
-        return config;
+        const activityName = document.getElementById('activityName').value;
+        localStorage.setItem('activityName', activityName);
+        return activityName;
     }
 
     handleDragOver(e) {
@@ -142,14 +123,12 @@ class ImageUploader {
     }
 
     async uploadImages() {
-        const config = this.saveConfig();
+        const activityName = this.saveConfig();
 
-        if (!config.githubToken || !config.githubOwner || !config.githubRepo) {
-            this.showStatus('请填写 GitHub 配置信息', 'error');
+        if (!this.config) {
+            this.showStatus('配置加载失败，请检查服务器配置', 'error');
             return;
         }
-
-        const activityName = config.activityName;
 
         if (!activityName) {
             this.showStatus('请输入活动名称', 'error');
@@ -157,19 +136,19 @@ class ImageUploader {
         }
 
         const apiConfig = {
-            githubOwner: config.githubOwner,
-            githubRepo: config.githubRepo,
-            githubToken: config.githubToken,
-            githubBranch: config.githubBranch || 'main',
-            feishuAppId: config.feishuAppId,
-            feishuAppSecret: config.feishuAppSecret,
-            feishuBitableAppToken: config.feishuBitableAppToken,
-            feishuBitableTableId: config.feishuBitableTableId,
-            fieldName1: 'imgurl1',
-            fieldName2: 'imgurl2',
-            fieldName3: 'imgurl3',
+            githubOwner: this.config.github.owner,
+            githubRepo: this.config.github.repo,
+            githubToken: this.config.github.token,
+            githubBranch: this.config.github.branch || 'main',
+            feishuAppId: this.config.feishu.app_id,
+            feishuAppSecret: this.config.feishu.app_secret,
+            feishuBitableAppToken: this.config.feishu.bitable_app_token,
+            feishuBitableTableId: this.config.feishu.bitable_table_id,
+            fieldName1: this.config.field_names.imgurl1,
+            fieldName2: this.config.field_names.imgurl2,
+            fieldName3: this.config.field_names.imgurl3,
             activityName: activityName,
-            nameFieldName: 'name'
+            nameFieldName: this.config.field_names.name
         };
 
         console.log('GitHub Config:', {
