@@ -2,7 +2,6 @@ class ImageUploader {
     constructor() {
         this.selectedFiles = [];
         this.uploadedUrls = [];
-        this.config = null;
         this.initElements();
         this.bindEvents();
         this.loadConfig().then(() => {
@@ -31,13 +30,21 @@ class ImageUploader {
     }
 
     async loadConfig() {
-        try {
-            const response = await fetch('feishu-config.json');
-            const configData = await response.json();
-            this.config = configData;
-        } catch (error) {
-            console.error('加载配置文件失败:', error);
-            this.config = null;
+        const savedConfig = localStorage.getItem('uploadConfig');
+        if (savedConfig) {
+            try {
+                const config = JSON.parse(savedConfig);
+                if (config.githubToken) document.getElementById('githubToken').value = config.githubToken;
+                if (config.githubOwner) document.getElementById('githubOwner').value = config.githubOwner;
+                if (config.githubRepo) document.getElementById('githubRepo').value = config.githubRepo;
+                if (config.githubBranch) document.getElementById('githubBranch').value = config.githubBranch;
+                if (config.feishuAppId) document.getElementById('feishuAppId').value = config.feishuAppId;
+                if (config.feishuAppSecret) document.getElementById('feishuAppSecret').value = config.feishuAppSecret;
+                if (config.feishuBitableAppToken) document.getElementById('feishuBitableAppToken').value = config.feishuBitableAppToken;
+                if (config.feishuBitableTableId) document.getElementById('feishuBitableTableId').value = config.feishuBitableTableId;
+            } catch (error) {
+                console.error('加载保存的配置失败:', error);
+            }
         }
 
         const savedActivityName = localStorage.getItem('activityName');
@@ -47,8 +54,20 @@ class ImageUploader {
     }
 
     saveConfig() {
-        const activityName = document.getElementById('activityName').value;
-        localStorage.setItem('activityName', activityName);
+        const config = {
+            githubToken: document.getElementById('githubToken').value,
+            githubOwner: document.getElementById('githubOwner').value,
+            githubRepo: document.getElementById('githubRepo').value,
+            githubBranch: document.getElementById('githubBranch').value,
+            feishuAppId: document.getElementById('feishuAppId').value,
+            feishuAppSecret: document.getElementById('feishuAppSecret').value,
+            feishuBitableAppToken: document.getElementById('feishuBitableAppToken').value,
+            feishuBitableTableId: document.getElementById('feishuBitableTableId').value,
+            activityName: document.getElementById('activityName').value
+        };
+        localStorage.setItem('uploadConfig', JSON.stringify(config));
+        localStorage.setItem('activityName', config.activityName);
+        return config;
     }
 
     handleDragOver(e) {
@@ -123,41 +142,41 @@ class ImageUploader {
     }
 
     async uploadImages() {
-        this.saveConfig();
+        const config = this.saveConfig();
 
-        if (!this.config) {
-            this.showStatus('配置文件加载失败，请检查 feishu-config.json', 'error');
+        if (!config.githubToken || !config.githubOwner || !config.githubRepo) {
+            this.showStatus('请填写 GitHub 配置信息', 'error');
             return;
         }
 
-        const activityName = document.getElementById('activityName').value;
+        const activityName = config.activityName;
 
         if (!activityName) {
             this.showStatus('请输入活动名称', 'error');
             return;
         }
 
-        const config = {
-            githubOwner: this.config.github.owner,
-            githubRepo: this.config.github.repo,
-            githubToken: this.config.github.token,
-            githubBranch: this.config.github.branch,
-            feishuAppId: this.config.feishu.app_id,
-            feishuAppSecret: this.config.feishu.app_secret,
-            feishuBitableAppToken: this.config.feishu.bitable_app_token,
-            feishuBitableTableId: this.config.feishu.bitable_table_id,
-            fieldName1: this.config.feishu.field_names.imgurl1,
-            fieldName2: this.config.feishu.field_names.imgurl2,
-            fieldName3: this.config.feishu.field_names.imgurl3,
+        const apiConfig = {
+            githubOwner: config.githubOwner,
+            githubRepo: config.githubRepo,
+            githubToken: config.githubToken,
+            githubBranch: config.githubBranch || 'main',
+            feishuAppId: config.feishuAppId,
+            feishuAppSecret: config.feishuAppSecret,
+            feishuBitableAppToken: config.feishuBitableAppToken,
+            feishuBitableTableId: config.feishuBitableTableId,
+            fieldName1: 'imgurl1',
+            fieldName2: 'imgurl2',
+            fieldName3: 'imgurl3',
             activityName: activityName,
-            nameFieldName: this.config.feishu.name_field_name
+            nameFieldName: 'name'
         };
 
         console.log('GitHub Config:', {
-            owner: config.githubOwner,
-            repo: config.githubRepo,
-            branch: config.githubBranch,
-            token: config.githubToken ? 'Token exists' : 'Token missing'
+            owner: apiConfig.githubOwner,
+            repo: apiConfig.githubRepo,
+            branch: apiConfig.githubBranch,
+            token: apiConfig.githubToken ? 'Token exists' : 'Token missing'
         });
 
         this.uploadBtn.disabled = true;
@@ -170,13 +189,13 @@ class ImageUploader {
                 const file = this.selectedFiles[i];
                 this.showStatus(`<span class="loading"></span>正在上传第 ${i + 1}/${this.selectedFiles.length} 张图片...`, 'info');
                 
-                const url = await this.uploadToGitHub(file, config);
+                const url = await this.uploadToGitHub(file, apiConfig);
                 this.uploadedUrls.push(url);
             }
 
             this.showStatus('图片上传成功！正在写入飞书多维表格...', 'success');
             
-            await this.writeToFeishu(config);
+            await this.writeToFeishu(apiConfig);
             
             this.showResult();
             this.showStatus('所有操作完成！', 'success');
