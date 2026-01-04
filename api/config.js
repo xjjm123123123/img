@@ -1,4 +1,4 @@
-export default function handler(request, response) {
+module.exports = function handler(request, response) {
   const config = {
     github: {
       owner: process.env.GITHUB_OWNER || '',
@@ -21,4 +21,4 @@ export default function handler(request, response) {
   };
 
   response.status(200).json(config);
-}
+};

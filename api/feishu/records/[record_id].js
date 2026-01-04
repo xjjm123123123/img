@@ -1,4 +1,4 @@
-export default async function handler(request, response) {
+module.exports = async function handler(request, response) {
   if (request.method !== 'PUT') {
     return response.status(405).json({ error: 'Method not allowed' });
   }
@@ -68,4 +68,4 @@ export default async function handler(request, response) {
   } catch (error) {
     response.status(500).json({ error: error.message });
   }
-}
+};
