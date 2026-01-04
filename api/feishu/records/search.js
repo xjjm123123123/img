@@ -1,10 +1,10 @@
-module.exports = async function handler(request, response) {
-  if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Method not allowed' });
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const body = request.body ? JSON.parse(request.body) : {};
+    const body = req.body || {};
     const app_id = body.app_id || process.env.FEISHU_APP_ID || '';
     const app_secret = body.app_secret || process.env.FEISHU_APP_SECRET || '';
     const bitable_app_token = body.bitable_app_token;
@@ -13,11 +13,11 @@ module.exports = async function handler(request, response) {
     const activity_name = body.activity_name;
 
     if (!bitable_app_token || !bitable_table_id || !activity_name) {
-      return response.status(400).json({ error: '缺少必要参数' });
+      return res.status(400).json({ error: '缺少必要参数' });
     }
 
     if (!app_id) {
-      return response.status(400).json({ error: '缺少 App ID' });
+      return res.status(400).json({ error: '缺少 App ID' });
     }
 
     const auth_response = await fetch(
@@ -76,12 +76,12 @@ module.exports = async function handler(request, response) {
     const result = await records_response.json();
 
     if (result.data && result.data.items && result.data.items.length > 0) {
-      response.status(200).json({ record_id: result.data.items[0].record_id });
+      res.status(200).json({ record_id: result.data.items[0].record_id });
     } else {
-      response.status(200).json({ record_id: null });
+      res.status(200).json({ record_id: null });
     }
 
   } catch (error) {
-    response.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };

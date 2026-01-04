@@ -1,15 +1,15 @@
-module.exports = async function handler(request, response) {
-  if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Method not allowed' });
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const body = request.body ? JSON.parse(request.body) : {};
+    const body = req.body || {};
     const app_id = body.app_id || process.env.FEISHU_APP_ID || '';
     const app_secret = body.app_secret || process.env.FEISHU_APP_SECRET || '';
 
     if (!app_id) {
-      return response.status(400).json({ error: '缺少 App ID' });
+      return res.status(400).json({ error: '缺少 App ID' });
     }
 
     const auth_response = await fetch(
@@ -37,9 +37,9 @@ module.exports = async function handler(request, response) {
       throw new Error('无效的访问令牌');
     }
 
-    response.status(200).json({ access_token: access_token });
+    res.status(200).json({ access_token: access_token });
 
   } catch (error) {
-    response.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
