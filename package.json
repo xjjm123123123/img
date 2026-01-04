@@ -1,13 +1,14 @@
 {
-  "name": "image-upload-plugin",
-  "version": "1.0.0",
-  "description": "批量上传图片到GitHub并写入多维表格",
-  "main": "index.html",
+  "name": "img-upload-vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "start": "python3 -m http.server 8000",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "keywords": ["image-upload", "github", "multidimensional-table"],
-  "author": "",
-  "license": "MIT"
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
 }

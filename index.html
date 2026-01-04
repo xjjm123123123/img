@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片批量上传插件</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .config-section h2 {
+            color: #555;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .upload-section {
+            margin-top: 30px;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            background: #e8eeff;
+            border-color: #5568d3;
+        }
+
+        .upload-area.dragover {
+            background: #e8eeff;
+            border-color: #5568d3;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .upload-hint {
+            color: #999;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .preview-section.active {
+            display: block;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .upload-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-section {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status-section.active {
+            display: block;
+        }
+
+        .status-section.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-section.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-section.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .result-section h3 {
+            color: #555;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .result-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .result-link {
+            padding: 8px 12px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            word-break: break-all;
+        }
+
+        .result-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .result-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📷 图片批量上传插件</h1>
+
+        <div class="config-section">
+            <h2>活动信息</h2>
+            <div class="form-group">
+                <label for="activityName">活动名称</label>
+                <input type="text" id="activityName" placeholder="请输入活动名称，将作为文件夹名称">
+            </div>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">点击或拖拽上传图片</div>
+                <div class="upload-hint">支持批量上传，最多 3 张图片</div>
+            </div>
+            <input type="file" id="fileInput" accept="image/*" multiple>
+        </div>
+
+        <div class="preview-section" id="previewSection">
+            <h3>已选择的图片</h3>
+            <div class="preview-grid" id="previewGrid"></div>
+            <button class="upload-btn" id="uploadBtn" disabled>开始上传</button>
+        </div>
+
+        <div class="status-section" id="statusSection"></div>
+
+        <div class="result-section" id="resultSection">
+            <h3>上传结果</h3>
+            <div class="result-links" id="resultLinks"></div>
+        </div>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+</body>
+</html>
