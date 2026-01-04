@@ -271,6 +271,25 @@
         .result-link a:hover {
             text-decoration: underline;
         }
+
+        .reupload-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+
+        .reupload-btn:hover {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -305,6 +324,7 @@
         <div class="result-section" id="resultSection">
             <h3>上传结果</h3>
             <div class="result-links" id="resultLinks"></div>
+            <button class="reupload-btn" id="reuploadBtn">重新上传</button>
         </div>
     </div>
 

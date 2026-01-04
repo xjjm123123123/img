@@ -18,6 +18,7 @@ class ImageUploader {
         this.statusSection = document.getElementById('statusSection');
         this.resultSection = document.getElementById('resultSection');
         this.resultLinks = document.getElementById('resultLinks');
+        this.reuploadBtn = document.getElementById('reuploadBtn');
     }
 
     bindEvents() {
@@ -27,6 +28,7 @@ class ImageUploader {
         this.uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
         this.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
         this.uploadBtn.addEventListener('click', () => this.uploadImages());
+        this.reuploadBtn.addEventListener('click', () => this.reupload());
     }
 
     async loadConfig() {
@@ -369,6 +371,17 @@ class ImageUploader {
                 <strong>图片 ${index + 1}:</strong> <a href="${url}" target="_blank">${url}</a>
             </div>
         `).join('');
+    }
+
+    reupload() {
+        this.selectedFiles = [];
+        this.uploadedUrls = [];
+        this.fileInput.value = '';
+        this.previewGrid.innerHTML = '';
+        this.previewSection.classList.remove('active');
+        this.resultSection.classList.remove('active');
+        this.hideStatus();
+        this.uploadBtn.disabled = true;
     }
 }
 
