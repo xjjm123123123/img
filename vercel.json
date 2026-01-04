@@ -4,10 +4,6 @@
     {
       "src": "api/**/*.py",
       "use": "@vercel/python"
-    },
-    {
-      "src": "**/*",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -15,7 +11,7 @@
       "handle": "filesystem"
     },
     {
-      "src": "/(.*)",
+      "src": "/((?!api/).*)",
       "dest": "/index.html"
     }
   ]
