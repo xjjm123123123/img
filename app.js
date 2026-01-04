@@ -138,7 +138,6 @@ class ImageUploader {
         const apiConfig = {
             githubOwner: this.config.github.owner,
             githubRepo: this.config.github.repo,
-            githubToken: this.config.github.token,
             githubBranch: this.config.github.branch || 'main',
             feishuAppId: this.config.feishu.app_id,
             feishuAppSecret: this.config.feishu.app_secret,
@@ -154,8 +153,7 @@ class ImageUploader {
         console.log('GitHub Config:', {
             owner: apiConfig.githubOwner,
             repo: apiConfig.githubRepo,
-            branch: apiConfig.githubBranch,
-            token: apiConfig.githubToken ? 'Token exists' : 'Token missing'
+            branch: apiConfig.githubBranch
         });
 
         this.uploadBtn.disabled = true;
@@ -197,64 +195,26 @@ class ImageUploader {
                 try {
                     const content = e.target.result.split(',')[1];
                     
-                    let sha = null;
-                    
-                    try {
-                        const checkResponse = await fetch(
-                            `https://api.github.com/repos/${config.githubOwner}/${config.githubRepo}/contents/${path}`,
-                            {
-                                method: 'GET',
-                                headers: {
-                                    'Authorization': `token ${config.githubToken}`,
-                                    'Content-Type': 'application/json',
-                                }
-                            }
-                        );
-                        
-                        if (checkResponse.ok) {
-                            const checkData = await checkResponse.json();
-                            sha = checkData.sha;
-                        }
-                    } catch (checkError) {
-                        console.log('File does not exist, will create new file');
-                    }
-                    
-                    const requestBody = {
-                        message: `Upload image: ${fileName}`,
-                        content: content,
-                        branch: config.githubBranch
-                    };
-                    
-                    if (sha) {
-                        requestBody.sha = sha;
-                    }
-                    
-                    const response = await fetch(
-                        `https://api.github.com/repos/${config.githubOwner}/${config.githubRepo}/contents/${path}`,
-                        {
-                            method: 'PUT',
-                            headers: {
-                                'Authorization': `token ${config.githubToken}`,
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(requestBody)
-                        }
-                    );
+                    const response = await fetch('/api/github/upload', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            file_name: fileName,
+                            file_content: content,
+                            path: path
+                        })
+                    });
 
                     if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('GitHub API Error:', response.status, errorText);
-                        try {
-                            const errorData = JSON.parse(errorText);
-                            throw new Error(errorData.message || '上传到 GitHub 失败');
-                        } catch (parseError) {
-                            throw new Error(`上传到 GitHub 失败: ${errorText}`);
-                        }
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || '上传到 GitHub 失败');
                     }
 
                     const data = await response.json();
                     console.log('GitHub upload success:', data);
-                    resolve(data.content.download_url);
+                    resolve(data.download_url);
                 } catch (error) {
                     reject(error);
                 }
