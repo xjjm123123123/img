@@ -186,44 +186,95 @@ class ImageUploader {
         }
     }
 
-    async uploadToGitHub(file, config) {
-        const timestamp = Date.now();
-        const fileName = `${timestamp}_${file.name}`;
-        const path = `images/${config.activityName}/${fileName}`;
-
-        const reader = new FileReader();
+    async compressImage(file) {
         return new Promise((resolve, reject) => {
-            reader.onload = async (e) => {
-                try {
-                    const content = e.target.result.split(',')[1];
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
                     
-                    const response = await fetch('/api/github/upload', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            file_name: fileName,
-                            file_content: content,
-                            path: path
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || '上传到 GitHub 失败');
+                    // 限制最大尺寸，防止过大，兼顾清晰度
+                    const MAX_SIZE = 1600; 
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
                     }
-
-                    const data = await response.json();
-                    console.log('GitHub upload success:', data);
-                    resolve(data.download_url);
-                } catch (error) {
-                    reject(error);
-                }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // 压缩质量 0.7，通常能将几MB的图片压缩到几百KB
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve(dataUrl);
+                };
+                img.onerror = (e) => reject(new Error('图片加载失败'));
             };
             reader.onerror = () => reject(new Error('读取文件失败'));
-            reader.readAsDataURL(file);
         });
+    }
+
+    async uploadToGitHub(file, config) {
+        const timestamp = Date.now();
+        // 强制使用 jpg 后缀，因为 canvas 导出的是 jpg
+        const fileName = `${timestamp}_${file.name.replace(/\.[^/.]+$/, "")}.jpg`;
+        const path = `images/${config.activityName}/${fileName}`;
+
+        try {
+            // 1. 压缩图片
+            const compressedDataUrl = await this.compressImage(file);
+            const content = compressedDataUrl.split(',')[1];
+            
+            // 2. 上传
+            const response = await fetch('/api/github/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    file_name: fileName,
+                    file_content: content,
+                    path: path
+                })
+            });
+
+            // 3. 处理响应
+            const responseText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('JSON 解析失败，原始响应:', responseText);
+                // 如果解析失败，检查是否是常见的 Vercel 错误
+                if (responseText.includes('Request Entity Too Large') || responseText.includes('FUNCTION_PAYLOAD_LIMIT_EXCEEDED')) {
+                     throw new Error('图片太大，压缩后仍超过服务器限制。请尝试使用更小的图片。');
+                }
+                throw new Error(`服务器响应错误: ${responseText.substring(0, 100)}`);
+            }
+
+            if (!response.ok) {
+                throw new Error(data.error || '上传到 GitHub 失败');
+            }
+
+            console.log('GitHub upload success:', data);
+            return data.download_url;
+        } catch (error) {
+            console.error('上传过程出错:', error);
+            throw error;
+        }
     }
 
     async searchFeishuRecord(config, activityName) {
