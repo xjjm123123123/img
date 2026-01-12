@@ -59,16 +59,17 @@
             font-weight: 500;
         }
 
-        .form-group input {
+        .form-group input, .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 6px;
             font-size: 14px;
             transition: border-color 0.3s;
+            font-family: inherit;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group textarea:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -298,9 +299,45 @@
 
         <div class="config-section">
             <h2>活动信息</h2>
+            
             <div class="form-group">
-                <label for="activityName">活动名称</label>
-                <input type="text" id="activityName" placeholder="请输入活动名称，将作为文件夹名称">
+                <label for="activityName">GitHub 文件夹名称 (不存入表格)</label>
+                <input type="text" id="activityName" placeholder="例如：2024上海峰会，用于生成图片链接路径">
+            </div>
+
+            <div class="form-group">
+                <label for="activityId">活动 ID (唯一标识符)</label>
+                <input type="text" id="activityId" placeholder="例如：2024-SH-001，用于匹配表格记录">
+            </div>
+
+            <div class="form-group">
+                <label for="activityCity">活动举办城市</label>
+                <input type="text" id="activityCity" placeholder="例如：上海">
+            </div>
+
+            <div class="form-group">
+                <label for="activityDate">活动日期</label>
+                <input type="date" id="activityDate">
+            </div>
+
+            <div class="form-group">
+                <label for="activityHighlights">活动亮点 (每行一条)</label>
+                <textarea id="activityHighlights" rows="3" placeholder="输入活动亮点，按回车换行"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="quoteText">金句/引用内容</label>
+                <textarea id="quoteText" rows="2" placeholder="输入金句内容"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="quoteAuthor">金句作者</label>
+                <input type="text" id="quoteAuthor" placeholder="例如：张三">
+            </div>
+
+            <div class="form-group">
+                <label for="quoteRole">作者角色</label>
+                <input type="text" id="quoteRole" placeholder="例如：CEO">
             </div>
         </div>
 

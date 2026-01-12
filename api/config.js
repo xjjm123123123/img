@@ -15,6 +15,13 @@ module.exports = async function handler(req, res) {
       imgurl1: 'imgurl1',
       imgurl2: 'imgurl2',
       imgurl3: 'imgurl3',
+      id: 'id',
+      city: 'city',
+      date: 'date',
+      highlights: 'highlights',
+      quote_text: 'quote_text',
+      quote_author: 'quote_author',
+      quote_role: 'quote_role',
       name: 'name'
     }
   };

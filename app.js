@@ -45,12 +45,19 @@ class ImageUploader {
         if (savedActivityName) {
             document.getElementById('activityName').value = savedActivityName;
         }
+        
+        const savedActivityId = localStorage.getItem('activityId');
+        if (savedActivityId) {
+            document.getElementById('activityId').value = savedActivityId;
+        }
     }
 
     saveConfig() {
         const activityName = document.getElementById('activityName').value;
+        const activityId = document.getElementById('activityId').value;
         localStorage.setItem('activityName', activityName);
-        return activityName;
+        localStorage.setItem('activityId', activityId);
+        return { activityName, activityId };
     }
 
     handleDragOver(e) {
@@ -125,17 +132,26 @@ class ImageUploader {
     }
 
     async uploadImages() {
-        const activityName = this.saveConfig();
+        const { activityName, activityId } = this.saveConfig();
+        const activityCity = document.getElementById('activityCity').value;
+        const activityDate = document.getElementById('activityDate').value;
+        const activityHighlights = document.getElementById('activityHighlights').value;
+        const quoteText = document.getElementById('quoteText').value;
+        const quoteAuthor = document.getElementById('quoteAuthor').value;
+        const quoteRole = document.getElementById('quoteRole').value;
 
         if (!this.config) {
             this.showStatus('配置加载失败，请检查服务器配置', 'error');
             return;
         }
 
-        if (!activityName) {
-            this.showStatus('请输入活动名称', 'error');
+        if (!activityName || !activityId) {
+            this.showStatus('请输入文件夹名称和活动ID', 'error');
             return;
         }
+
+        // 处理高亮，按换行分隔
+        const highlightsArray = activityHighlights.split('\n').filter(line => line.trim() !== '');
 
         const apiConfig = {
             githubOwner: this.config.github.owner,
@@ -145,18 +161,26 @@ class ImageUploader {
             feishuAppSecret: this.config.feishu.app_secret,
             feishuBitableAppToken: this.config.feishu.bitable_app_token,
             feishuBitableTableId: this.config.feishu.bitable_table_id,
-            fieldName1: this.config.field_names.imgurl1,
-            fieldName2: this.config.field_names.imgurl2,
-            fieldName3: this.config.field_names.imgurl3,
+            
+            // 字段配置
+            fieldNames: this.config.field_names,
+            
+            // 基础数据
             activityName: activityName,
-            nameFieldName: this.config.field_names.name
+            activityId: activityId,
+            
+            // 表格数据
+            fieldsData: {
+                [this.config.field_names.name]: activityName,
+                [this.config.field_names.id]: activityId,
+                [this.config.field_names.city]: activityCity,
+                [this.config.field_names.date]: activityDate,
+                [this.config.field_names.highlights]: highlightsArray,
+                [this.config.field_names.quote_text]: quoteText,
+                [this.config.field_names.quote_author]: quoteAuthor,
+                [this.config.field_names.quote_role]: quoteRole
+            }
         };
-
-        console.log('GitHub Config:', {
-            owner: apiConfig.githubOwner,
-            repo: apiConfig.githubRepo,
-            branch: apiConfig.githubBranch
-        });
 
         this.uploadBtn.disabled = true;
         this.uploadedUrls = [];
@@ -277,14 +301,14 @@ class ImageUploader {
         }
     }
 
-    async searchFeishuRecord(config, activityName) {
+    async searchFeishuRecord(config, searchValue) {
         try {
             console.log('搜索飞书记录，参数:', {
                 app_id: config.feishuAppId,
                 bitable_app_token: config.feishuBitableAppToken,
                 bitable_table_id: config.feishuBitableTableId,
-                name_field_name: config.nameFieldName,
-                activity_name: activityName
+                name_field_name: config.fieldNames.id,
+                search_value: searchValue
             });
 
             const response = await fetch('/api/feishu/records/search', {
@@ -297,8 +321,8 @@ class ImageUploader {
                     app_secret: config.feishuAppSecret,
                     bitable_app_token: config.feishuBitableAppToken,
                     bitable_table_id: config.feishuBitableTableId,
-                    name_field_name: config.nameFieldName,
-                    activity_name: activityName
+                    name_field_name: config.fieldNames.id,
+                    activity_name: searchValue // 后端接口参数名为 activity_name，实际传 id 值
                 })
             });
 
@@ -322,19 +346,8 @@ class ImageUploader {
         }
     }
 
-    async updateFeishuRecord(config, recordId) {
+    async updateFeishuRecord(config, recordId, fields) {
         try {
-            const fields = {};
-            if (this.uploadedUrls[0]) {
-                fields[config.fieldName1] = this.uploadedUrls[0];
-            }
-            if (this.uploadedUrls[1]) {
-                fields[config.fieldName2] = this.uploadedUrls[1];
-            }
-            if (this.uploadedUrls[2]) {
-                fields[config.fieldName3] = this.uploadedUrls[2];
-            }
-
             const response = await fetch(`/api/feishu/records/${recordId}`, {
                 method: 'PUT',
                 headers: {
@@ -369,22 +382,19 @@ class ImageUploader {
         }
 
         try {
-            const existingRecordId = await this.searchFeishuRecord(config, config.activityName);
+            // 使用 activityId 搜索现有记录
+            const existingRecordId = await this.searchFeishuRecord(config, config.activityId);
 
-            const fields = {};
-            fields[config.nameFieldName] = config.activityName;
-            if (this.uploadedUrls[0]) {
-                fields[config.fieldName1] = this.uploadedUrls[0];
-            }
-            if (this.uploadedUrls[1]) {
-                fields[config.fieldName2] = this.uploadedUrls[1];
-            }
-            if (this.uploadedUrls[2]) {
-                fields[config.fieldName3] = this.uploadedUrls[2];
-            }
+            // 构造字段数据
+            const fields = { ...config.fieldsData };
+            
+            // 添加图片链接
+            if (this.uploadedUrls[0]) fields[config.fieldNames.imgurl1] = this.uploadedUrls[0];
+            if (this.uploadedUrls[1]) fields[config.fieldNames.imgurl2] = this.uploadedUrls[1];
+            if (this.uploadedUrls[2]) fields[config.fieldNames.imgurl3] = this.uploadedUrls[2];
 
             if (existingRecordId) {
-                await this.updateFeishuRecord(config, existingRecordId);
+                await this.updateFeishuRecord(config, existingRecordId, fields);
                 console.log('已更新现有记录');
             } else {
                 const response = await fetch('/api/feishu/records', {
@@ -403,15 +413,15 @@ class ImageUploader {
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || '写入飞书多维表格失败');
+                    throw new Error(errorData.error || '创建飞书记录失败');
                 }
 
                 const data = await response.json();
                 console.log('飞书记录创建成功:', data);
             }
         } catch (error) {
-            console.warn('写入飞书多维表格失败:', error.message);
-            throw error;
+            console.error('写入飞书失败:', error);
+            throw new Error(`写入飞书失败: ${error.message}`);
         }
     }
 
