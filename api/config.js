@@ -15,13 +15,16 @@ module.exports = async function handler(req, res) {
       imgurl1: 'imgurl1',
       imgurl2: 'imgurl2',
       imgurl3: 'imgurl3',
-      id: 'id',
       city: 'city',
       date: 'date',
       highlights: 'highlights',
       quote_text: 'quote_text',
       quote_author: 'quote_author',
-      quote_role: 'quote_role',
+      quote_text_2: 'quote_text 2',
+      quote_author_2: 'quote_author 2',
+      quote_text_3: 'quote_text 3',
+      quote_author_3: 'quote_author 3',
+      workshop_type: '工作坊类型',
       name: 'name'
     }
   };

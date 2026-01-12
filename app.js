@@ -45,19 +45,12 @@ class ImageUploader {
         if (savedActivityName) {
             document.getElementById('activityName').value = savedActivityName;
         }
-        
-        const savedActivityId = localStorage.getItem('activityId');
-        if (savedActivityId) {
-            document.getElementById('activityId').value = savedActivityId;
-        }
     }
 
     saveConfig() {
         const activityName = document.getElementById('activityName').value;
-        const activityId = document.getElementById('activityId').value;
         localStorage.setItem('activityName', activityName);
-        localStorage.setItem('activityId', activityId);
-        return { activityName, activityId };
+        return { activityName };
     }
 
     handleDragOver(e) {
@@ -132,21 +125,25 @@ class ImageUploader {
     }
 
     async uploadImages() {
-        const { activityName, activityId } = this.saveConfig();
+        const { activityName } = this.saveConfig();
         const activityCity = document.getElementById('activityCity').value;
         const activityDate = document.getElementById('activityDate').value;
+        const workshopType = document.getElementById('workshopType').value;
         const activityHighlights = document.getElementById('activityHighlights').value;
         const quoteText = document.getElementById('quoteText').value;
         const quoteAuthor = document.getElementById('quoteAuthor').value;
-        const quoteRole = document.getElementById('quoteRole').value;
+        const quoteText2 = document.getElementById('quoteText2').value;
+        const quoteAuthor2 = document.getElementById('quoteAuthor2').value;
+        const quoteText3 = document.getElementById('quoteText3').value;
+        const quoteAuthor3 = document.getElementById('quoteAuthor3').value;
 
         if (!this.config) {
             this.showStatus('配置加载失败，请检查服务器配置', 'error');
             return;
         }
 
-        if (!activityName || !activityId) {
-            this.showStatus('请输入文件夹名称和活动ID', 'error');
+        if (!activityName) {
+            this.showStatus('请输入活动名称', 'error');
             return;
         }
 
@@ -167,18 +164,20 @@ class ImageUploader {
             
             // 基础数据
             activityName: activityName,
-            activityId: activityId,
             
             // 表格数据
             fieldsData: {
                 [this.config.field_names.name]: activityName,
-                [this.config.field_names.id]: activityId,
                 [this.config.field_names.city]: activityCity,
                 [this.config.field_names.date]: activityDate,
+                [this.config.field_names.workshop_type]: workshopType,
                 [this.config.field_names.highlights]: highlightsArray,
                 [this.config.field_names.quote_text]: quoteText,
                 [this.config.field_names.quote_author]: quoteAuthor,
-                [this.config.field_names.quote_role]: quoteRole
+                [this.config.field_names.quote_text_2]: quoteText2,
+                [this.config.field_names.quote_author_2]: quoteAuthor2,
+                [this.config.field_names.quote_text_3]: quoteText3,
+                [this.config.field_names.quote_author_3]: quoteAuthor3
             }
         };
 
@@ -307,7 +306,7 @@ class ImageUploader {
                 app_id: config.feishuAppId,
                 bitable_app_token: config.feishuBitableAppToken,
                 bitable_table_id: config.feishuBitableTableId,
-                name_field_name: config.fieldNames.id,
+                name_field_name: config.fieldNames.name,
                 search_value: searchValue
             });
 
@@ -321,8 +320,8 @@ class ImageUploader {
                     app_secret: config.feishuAppSecret,
                     bitable_app_token: config.feishuBitableAppToken,
                     bitable_table_id: config.feishuBitableTableId,
-                    name_field_name: config.fieldNames.id,
-                    activity_name: searchValue // 后端接口参数名为 activity_name，实际传 id 值
+                    name_field_name: config.fieldNames.name,
+                    activity_name: searchValue
                 })
             });
 
@@ -382,8 +381,8 @@ class ImageUploader {
         }
 
         try {
-            // 使用 activityId 搜索现有记录
-            const existingRecordId = await this.searchFeishuRecord(config, config.activityId);
+            // 使用 activityName 搜索现有记录
+            const existingRecordId = await this.searchFeishuRecord(config, config.activityName);
 
             // 构造字段数据
             const fields = { ...config.fieldsData };

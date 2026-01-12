@@ -301,13 +301,8 @@
             <h2>活动信息</h2>
             
             <div class="form-group">
-                <label for="activityName">活动名称</label>
+                <label for="activityName">活动名称 (对应 GitHub 文件夹名和表格 name 字段)</label>
                 <input type="text" id="activityName" placeholder="例如：2024上海峰会">
-            </div>
-
-            <div class="form-group">
-                <label for="activityId">活动 ID (唯一标识符)</label>
-                <input type="text" id="activityId" placeholder="例如：2024-SH-001，用于匹配表格记录">
             </div>
 
             <div class="form-group">
@@ -321,23 +316,49 @@
             </div>
 
             <div class="form-group">
+                <label for="workshopType">工作坊类型</label>
+                <input type="text" id="workshopType" placeholder="例如：设计思维工作坊">
+            </div>
+
+            <div class="form-group">
                 <label for="activityHighlights">活动亮点 (每行一条)</label>
                 <textarea id="activityHighlights" rows="3" placeholder="输入活动亮点，按回车换行"></textarea>
             </div>
 
-            <div class="form-group">
-                <label for="quoteText">金句/引用内容</label>
-                <textarea id="quoteText" rows="2" placeholder="输入金句内容"></textarea>
+            <div class="quote-group">
+                <h3>金句 1</h3>
+                <div class="form-group">
+                    <label for="quoteText">金句/引用内容</label>
+                    <textarea id="quoteText" rows="2" placeholder="输入金句内容"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="quoteAuthor">金句作者</label>
+                    <input type="text" id="quoteAuthor" placeholder="例如：张三">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="quoteAuthor">金句作者</label>
-                <input type="text" id="quoteAuthor" placeholder="例如：张三">
+            <div class="quote-group">
+                <h3>金句 2</h3>
+                <div class="form-group">
+                    <label for="quoteText2">金句/引用内容 2</label>
+                    <textarea id="quoteText2" rows="2" placeholder="输入金句内容 2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="quoteAuthor2">金句作者 2</label>
+                    <input type="text" id="quoteAuthor2" placeholder="例如：李四">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="quoteRole">作者角色</label>
-                <input type="text" id="quoteRole" placeholder="例如：CEO">
+            <div class="quote-group">
+                <h3>金句 3</h3>
+                <div class="form-group">
+                    <label for="quoteText3">金句/引用内容 3</label>
+                    <textarea id="quoteText3" rows="2" placeholder="输入金句内容 3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="quoteAuthor3">金句作者 3</label>
+                    <input type="text" id="quoteAuthor3" placeholder="例如：王五">
+                </div>
             </div>
         </div>
 
