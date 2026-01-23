@@ -147,8 +147,8 @@ class ImageUploader {
             return;
         }
 
-        // 处理高亮，按换行分隔
-        const highlightsArray = activityHighlights.split('\n').filter(line => line.trim() !== '');
+        // 处理高亮
+        const highlights = activityHighlights;
 
         const apiConfig = {
             githubOwner: this.config.github.owner,
@@ -171,7 +171,7 @@ class ImageUploader {
                 [this.config.field_names.city]: activityCity,
                 [this.config.field_names.date]: activityDate,
                 [this.config.field_names.workshop_type]: workshopType,
-                [this.config.field_names.highlights]: highlightsArray,
+                [this.config.field_names.highlights]: highlights,
                 [this.config.field_names.quote_text]: quoteText,
                 [this.config.field_names.quote_author]: quoteAuthor,
                 [this.config.field_names.quote_text_2]: quoteText2,
